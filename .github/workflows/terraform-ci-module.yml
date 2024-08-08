@@ -1,0 +1,48 @@
+name: "Terraform-CI Infrastructure"
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  terraform:
+    name: "Terraform CI"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.4
+
+      - name: Terraform CI
+        id: terraform-ci
+        uses: ./.github/workflows/terraform-commands
+
+      - name: Terraform Docs
+        id: terraform-doc
+        uses: ./.github/workflows/terraform-docs
+
+      - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `### Terraform
+            #### Terraform Format and Style 🖌\`${{ steps.terraform-ci.outputs.format }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.terraform-ci.outputs.init  }}\`
+            #### Terraform Validation 🤖\`${{ steps.terraform-ci.outputs.validate }}\`
+
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })

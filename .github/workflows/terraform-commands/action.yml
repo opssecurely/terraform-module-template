@@ -1,0 +1,29 @@
+name: "Terraform Commands"
+description: "Terraform fmt, init, validate and plan"
+outputs:
+  format:
+    description: "Terraform Format"
+    value: ${{ steps.fmt.outcome }}
+  init:
+    description: "Terraform init"
+    value: ${{ steps.init.outcome }}
+  validate:
+    description: "Terraform validate"
+    value: ${{ steps.validate.outcome }}
+runs:
+  using: "composite"
+  steps:
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check -diff -recursive
+      shell: bash
+
+    - name: Terraform Init
+      id: init
+      run: terraform init -input=false -backend=false
+      shell: bash
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+      shell: bash
